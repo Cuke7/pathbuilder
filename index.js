@@ -186,7 +186,7 @@ async function askClasses() {
         name: "classe",
         type: "list",
         message: "Quelle classe de personnage avez vous choisi ?",
-        choices: classesChoice.sort(frsort), default: 13,
+        choices: classesChoice.sort(frsort),
     })
     return answer.classe
 }
@@ -207,7 +207,7 @@ async function askAncestries() {
         name: "ancestry",
         type: "list",
         message: "Quelle est son ascendance ?",
-        choices: ancestriesChoice.sort(frsort), default: 6,
+        choices: ancestriesChoice.sort(frsort),
     })
     return answer.ancestry
 }
