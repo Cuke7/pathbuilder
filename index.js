@@ -13,6 +13,9 @@ import hb from 'handlebars';
 import { readFile } from 'fs/promises';
 import inlineCss from 'inline-css';
 
+// Wake up server
+axios.get("https://pf2-database.herokuapp.com/wiki?id=feCnVrPPlKhl701x")
+
 // Initialisation
 let spinner;
 
