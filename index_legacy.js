@@ -7,11 +7,8 @@ import { createSpinner } from 'nanospinner'
 import figlet from 'figlet';
 import gradient from 'gradient-string';
 import fs from 'fs';
-import puppeteer from 'puppeteer';
-import Promise from 'bluebird';
-import hb from 'handlebars';
+import pdf from 'html-pdf-node';
 import { readFile } from 'fs/promises';
-import inlineCss from 'inline-css';
 
 // Initialisation
 let spinner;
@@ -23,23 +20,7 @@ if (!fs.existsSync(dir)) {
 
 const dictionary = JSON.parse(
     await readFile(
-        new URL('./data/dictionary.json', import.meta.url)
-    )
-);
-const featsList = JSON.parse(
-    await readFile(
-        new URL('./data/feats.json', import.meta.url)
-    )
-);
-const classesList = JSON.parse(
-    await readFile(
-        new URL('./data/classList.json', import.meta.url)
-    )
-);
-
-const ancestriesList = JSON.parse(
-    await readFile(
-        new URL('./data/ancestryList.json', import.meta.url)
+        new URL('./dictionary.json', import.meta.url)
     )
 );
 
@@ -51,7 +32,7 @@ let name = await askName();
 let level = await askLevel();
 let classe = await askClasses();
 let ancestry = await askAncestries();
-let feats = loadFeats();
+let feats = await loadFeats();
 let classFeats = []
 let userValidation = false;
 while (!userValidation) {
@@ -74,16 +55,15 @@ let player = {
     classFeats,
     ancestryFeats
 }
-
+fs.writeFileSync("./out/player.json", JSON.stringify(player));
+console.log(blue("Fichier ") + red("./out/player.json ") + blue("généré avec succès"))
 // let data = fs.readFileSync('./out/player.json');
 // let player = JSON.parse(data);
-
 spinner = createSpinner(grey('Génération du PDF...')).start()
 await generatePDF(player)
 spinner.success()
 console.log(blue("Fichier ") + red("./out/player.pdf ") + blue("généré avec succès."))
-fs.writeFileSync("./out/player.json", JSON.stringify(player));
-console.log(blue("Fichier ") + red("./out/player.json ") + blue("généré avec succès"))
+
 
 
 //----------------------------------
@@ -105,7 +85,6 @@ async function generatePDF(player) {
         }
     };
     let html = "<body>"
-    html += "<h1>Dolgrin</h1>"
     html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
 
     for (const feat of player.classFeats) {
@@ -127,7 +106,7 @@ async function generatePDF(player) {
 
     let file = { content: html };
     return new Promise(function (resolve, reject) {
-        generatePdfPuppeteer(file, options).then(pdfBuffer => {
+        pdf.generatePdf(file, options).then(pdfBuffer => {
             // console.log("PDF Buffer:-", pdfBuffer);
             fs.writeFileSync('./out/player.pdf', pdfBuffer)
             resolve()
@@ -146,10 +125,6 @@ async function generatePDF(player) {
     function addStyles() {
         return `
         <style>
-            h1 { 
-                text-align: center;
-                color: #6D0000;
-            }
             h2 {
                 color: #6D0000;
             }
@@ -200,17 +175,17 @@ async function askLevel() {
 }
 
 async function askClasses() {
-    // spinner = createSpinner(grey('Chargement des classes...')).start()
-    // let classesList = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=classes')
+    spinner = createSpinner(grey('Chargement des classes...')).start()
+    let classesList = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=classes')
     let classesChoice = []
-    for (const key of Object.keys(classesList)) {
-        let classe = classesList[key]
+    for (const key of Object.keys(classesList.data)) {
+        let classe = classesList.data[key]
         let name = translate(classe.name);
         classe.key = key;
         let value = classe
         classesChoice.push({ name, value })
     }
-    // spinner.success({ text: grey("Classes chargées avec succès.") })
+    spinner.success({ text: grey("Classes chargées avec succès.") })
     let answer = await inquirer.prompt({
         name: "classe",
         type: "list",
@@ -221,17 +196,17 @@ async function askClasses() {
 }
 
 async function askAncestries() {
-    // spinner = createSpinner(grey('Chargement des ascendances...')).start()
-    // let ancestriesList = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=ancestries')
+    spinner = createSpinner(grey('Chargement des ascendances...')).start()
+    let ancestriesList = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=ancestries')
     let ancestriesChoice = []
-    for (const key of Object.keys(ancestriesList)) {
-        let ancestry = ancestriesList[key]
+    for (const key of Object.keys(ancestriesList.data)) {
+        let ancestry = ancestriesList.data[key]
         let name = translate(ancestry.name);
         ancestry.key = key;
         let value = ancestry
         ancestriesChoice.push({ name, value })
     }
-    // spinner.success({ text: grey('Ascendances chargés avec succès.') })
+    spinner.success({ text: grey('Ascendances chargés avec succès.') })
     let answer = await inquirer.prompt({
         name: "ancestry",
         type: "list",
@@ -241,13 +216,13 @@ async function askAncestries() {
     return answer.ancestry
 }
 
-function loadFeats() {
-    // spinner = createSpinner(grey('Chargement des dons...')).start()
-    // let feats = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=feats')
-    let featsArray = Object.values(featsList)
+async function loadFeats() {
+    spinner = createSpinner(grey('Chargement des dons...')).start()
+    let feats = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=feats')
+    let featsArray = Object.values(feats.data)
     let classFeats = featsArray.filter(feat => (feat.data.featType.value == "class" && feat.data.traits.value.includes(classe.key)))
     let ancestryFeats = featsArray.filter(feat => feat.data.featType.value == "ancestry" && feat.data.traits.value.includes(ancestry.key))
-    // spinner.success({ text: grey("Dons chargés avec succès.") })
+    spinner.success({ text: grey("Dons chargés avec succès.") })
     return [classFeats, ancestryFeats]
 }
 
@@ -308,46 +283,4 @@ function blue(text) {
 
 function frsort(a, b) {
     return a.name.localeCompare(b.name);
-}
-
-async function generatePdfPuppeteer(file, options, callback) {
-    // we are using headless mode
-    let args = [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-    ];
-    if (options.args) {
-        args = options.args;
-        delete options.args;
-    }
-
-    const browser = await puppeteer.launch({
-        args: args
-    });
-    const page = await browser.newPage();
-
-    if (file.content) {
-        let data = await inlineCss(file.content, { url: "/" });
-        // console.log("Compiling the template with handlebars")
-        // we have compile our code with handlebars
-        const template = hb.compile(data, { strict: true });
-        const result = template(data);
-        const html = result;
-
-        // We set the page content as the generated html by handlebars
-        await page.setContent(html, {
-            waitUntil: 'networkidle0', // wait for page to load completely
-        });
-    } else {
-        await page.goto(file.url, {
-            waitUntil: ['load', 'networkidle0'], // wait for page to load completely
-        });
-    }
-
-    return Promise.props(page.pdf(options))
-        .then(async function (data) {
-            await browser.close();
-
-            return Buffer.from(Object.values(data));
-        }).asCallback(callback);
 }
