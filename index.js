@@ -19,7 +19,7 @@ axios.get("https://pf2-database.herokuapp.com/wiki?id=feCnVrPPlKhl701x")
 // Initialisation
 let spinner;
 
-let dir = "./out"
+let dir = "./pathbuilder"
 if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
 }
@@ -84,9 +84,9 @@ let player = {
 spinner = createSpinner(grey('Génération du PDF...')).start()
 await generatePDF(player)
 spinner.success()
-console.log(blue("Fichier ") + red("./out/player.pdf ") + blue("généré avec succès."))
-fs.writeFileSync("./out/player.json", JSON.stringify(player));
-console.log(blue("Fichier ") + red("./out/player.json ") + blue("généré avec succès"))
+console.log(blue("Fichier ") + red("./pathbuilder/player.pdf ") + blue("généré avec succès."))
+fs.writeFileSync("./pathbuilder/player.json", JSON.stringify(player));
+console.log(blue("Fichier ") + red("./pathbuilder/player.json ") + blue("généré avec succès"))
 
 
 //----------------------------------
@@ -132,7 +132,7 @@ async function generatePDF(player) {
     return new Promise(function (resolve, reject) {
         generatePdfPuppeteer(file, options).then(pdfBuffer => {
             // console.log("PDF Buffer:-", pdfBuffer);
-            fs.writeFileSync('./out/player.pdf', pdfBuffer)
+            fs.writeFileSync('./pathbuilder/player.pdf', pdfBuffer)
             resolve()
         });
     })
