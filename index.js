@@ -306,7 +306,7 @@ function red(text) {
 }
 
 function blue(text) {
-    return chalk.blue(text)
+    return chalk.cyan(text)
 }
 
 function frsort(a, b) {
