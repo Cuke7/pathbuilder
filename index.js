@@ -164,11 +164,18 @@ async function generatePDF(player) {
             h2 {
                 color: #000000;
                 margin-top: 0px;
-                margin-bottomn: 0px;
+                margin-bottom: 0px;
             }
             h3 {
                 color: #6D0000;
             }
+            /*body {
+                background-image: url("./background.jpg");
+                background-repeat: repeat;
+            }*/
+            @page {
+                background-image: url("../data/background.jpg");
+              }
         </style>
         `
     }
