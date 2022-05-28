@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import inquirer from 'inquirer';
+// Custom version of inquirer, in order to translate the prompts
+import inquirer from './inquirer/lib/inquirer.js';
 import chalk from 'chalk'
 import axios from 'axios';
 import { createSpinner } from 'nanospinner'
@@ -38,6 +39,11 @@ const classesList = JSON.parse(
         new URL('./data/classList.json', import.meta.url)
     )
 );
+const historyList = JSON.parse(
+    await readFile(
+        new URL('./data/historyList.json', import.meta.url)
+    )
+);
 
 const ancestriesList = JSON.parse(
     await readFile(
@@ -51,8 +57,10 @@ console.clear()
 await displayWelcomeText("Pathbuilder")
 let name = await askName();
 let level = await askLevel();
-let classe = await askClasses();
 let ancestry = await askAncestries();
+let ancestryCaracs = await askCaracs(["str", "dex", "con", "int", "wis", "cha"])
+let history = await askHistory();
+let classe = await askClasses();
 let feats = loadFeats();
 let classFeats = []
 let userValidation = false;
@@ -73,6 +81,7 @@ let player = {
     level,
     classe,
     ancestry,
+    history,
     classFeats,
     ancestryFeats
 }
@@ -98,14 +107,6 @@ function translate(text) {
 }
 
 async function generatePDF(player) {
-    let options = {
-        format: 'A4', margin: {
-            top: "15mm",
-            bottom: "15mm",
-            left: "15mm",
-            right: "15mm"
-        }
-    };
     let html = "<body>"
     html += "<h1>Dolgrin</h1>"
     html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
@@ -192,6 +193,17 @@ function displayWelcomeText(text) {
     })
 }
 
+async function askCaracs(arr) {
+    let answer = await inquirer.prompt({
+        name: "caracs",
+        type: "checkbox",
+        message: "Quels sont les caractéristiques de son héritage ?",
+        choices: arr,
+    })
+
+    return answer.caracs
+}
+
 async function askName() {
     let answer = await inquirer.prompt({
         name: "name",
@@ -223,8 +235,6 @@ async function askLevel() {
 }
 
 async function askClasses() {
-    // spinner = createSpinner(grey('Chargement des classes...')).start()
-    // let classesList = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=classes')
     let classesChoice = []
     for (const key of Object.keys(classesList)) {
         let classe = classesList[key]
@@ -233,19 +243,16 @@ async function askClasses() {
         let value = classe
         classesChoice.push({ name, value })
     }
-    // spinner.success({ text: grey("Classes chargées avec succès.") })
     let answer = await inquirer.prompt({
         name: "classe",
         type: "list",
-        message: "Quelle classe de personnage avez vous choisi ?",
+        message: "Quelle sera son rôle au sein du groupe d'aventurier ?",
         choices: classesChoice.sort(frsort),
     })
     return answer.classe
 }
 
 async function askAncestries() {
-    // spinner = createSpinner(grey('Chargement des ascendances...')).start()
-    // let ancestriesList = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=ancestries')
     let ancestriesChoice = []
     for (const key of Object.keys(ancestriesList)) {
         let ancestry = ancestriesList[key]
@@ -254,7 +261,6 @@ async function askAncestries() {
         let value = ancestry
         ancestriesChoice.push({ name, value })
     }
-    // spinner.success({ text: grey('Ascendances chargés avec succès.') })
     let answer = await inquirer.prompt({
         name: "ancestry",
         type: "list",
@@ -264,13 +270,29 @@ async function askAncestries() {
     return answer.ancestry
 }
 
+async function askHistory() {
+    let historyChoice = []
+    for (const key of Object.keys(historyList)) {
+        let history = historyList[key]
+        let name = translate(history.name);
+        history.key = key;
+        let value = history
+        historyChoice.push({ name, value })
+    }
+    let answer = await inquirer.prompt({
+        name: "classe",
+        type: "list",
+        message: "Pouvez vous m'en dire plus sur son historique ?",
+        choices: historyChoice.sort(frsort),
+    })
+    return answer.classe
+}
+
+
 function loadFeats() {
-    // spinner = createSpinner(grey('Chargement des dons...')).start()
-    // let feats = await axios.get('https://pf2-database.herokuapp.com/getDataSets?cat=feats')
     let featsArray = Object.values(featsList)
     let classFeats = featsArray.filter(feat => (feat.data.featType.value == "class" && feat.data.traits.value.includes(classe.key)))
     let ancestryFeats = featsArray.filter(feat => feat.data.featType.value == "ancestry" && feat.data.traits.value.includes(ancestry.key))
-    // spinner.success({ text: grey("Dons chargés avec succès.") })
     return [classFeats, ancestryFeats]
 }
 
