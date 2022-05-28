@@ -7,14 +7,15 @@ import { createSpinner } from 'nanospinner'
 import figlet from 'figlet';
 import gradient from 'gradient-string';
 import fs from 'fs';
-import puppeteer from 'puppeteer';
-import Promise from 'bluebird';
-import hb from 'handlebars';
 import { readFile } from 'fs/promises';
-import inlineCss from 'inline-css';
+// import puppeteer from 'puppeteer';
+// import Promise from 'bluebird';
+// import hb from 'handlebars';
+// import { readFile } from 'fs/promises';
+// import inlineCss from 'inline-css';
 
 // Wake up server
-axios.get("https://pf2-database.herokuapp.com/wiki?id=feCnVrPPlKhl701x")
+// axios.get("https://pf2-database.herokuapp.com/wiki?id=feCnVrPPlKhl701x")
 
 // Initialisation
 let spinner;
@@ -81,10 +82,10 @@ let player = {
 // let data = fs.readFileSync('./out/player.json');
 // let player = JSON.parse(data);
 
-spinner = createSpinner(grey('Génération du PDF...')).start()
-await generatePDF(player)
-spinner.success()
-console.log(blue("Fichier ") + red("./pathbuilder/player.pdf ") + blue("généré avec succès."))
+// spinner = createSpinner(grey('Génération du PDF...')).start()
+// await generatePDF(player)
+// spinner.success()
+// console.log(blue("Fichier ") + red("./pathbuilder/player.pdf ") + blue("généré avec succès."))
 fs.writeFileSync("./pathbuilder/player.json", JSON.stringify(player));
 console.log(blue("Fichier ") + red("./pathbuilder/player.json ") + blue("généré avec succès"))
 
@@ -98,68 +99,68 @@ function translate(text) {
     return translation.nameFR
 }
 
-async function generatePDF(player) {
-    let options = {
-        format: 'A4', margin: {
-            top: "15mm",
-            bottom: "15mm",
-            left: "15mm",
-            right: "15mm"
-        }
-    };
-    let html = "<body>"
-    html += "<h1>Dolgrin</h1>"
-    html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
+// async function generatePDF(player) {
+//     let options = {
+//         format: 'A4', margin: {
+//             top: "15mm",
+//             bottom: "15mm",
+//             left: "15mm",
+//             right: "15mm"
+//         }
+//     };
+//     let html = "<body>"
+//     html += "<h1>Dolgrin</h1>"
+//     html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
 
-    for (const feat of player.classFeats) {
-        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-        html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
-    }
+//     for (const feat of player.classFeats) {
+//         let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
+//         html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+//     }
 
-    for (const feat of player.ancestryFeats) {
-        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-        html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
-    }
+//     for (const feat of player.ancestryFeats) {
+//         let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
+//         html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+//     }
 
-    html += "</div>"
-    html += "</body>"
+//     html += "</div>"
+//     html += "</body>"
 
-    html += addStyles()
+//     html += addStyles()
 
-    // fs.writeFileSync("./test.html", html);
+//     // fs.writeFileSync("./test.html", html);
 
-    let file = { content: html };
-    return new Promise(function (resolve, reject) {
-        generatePdfPuppeteer(file, options).then(pdfBuffer => {
-            // console.log("PDF Buffer:-", pdfBuffer);
-            fs.writeFileSync('./pathbuilder/player.pdf', pdfBuffer)
-            resolve()
-        });
-    })
+//     let file = { content: html };
+//     return new Promise(function (resolve, reject) {
+//         generatePdfPuppeteer(file, options).then(pdfBuffer => {
+//             // console.log("PDF Buffer:-", pdfBuffer);
+//             fs.writeFileSync('./pathbuilder/player.pdf', pdfBuffer)
+//             resolve()
+//         });
+//     })
 
 
-    function addBlock(title, text) {
-        let content = '<div style="padding: 10px 20px 0 20px; display: inline-block; font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.5; text-align: left; break-inside: avoid-column; break-inside: avoid;">'
-        content += "<h2>" + title + "</h2>"
-        content += text
-        content += "</div>"
-        return content
-    }
+//     function addBlock(title, text) {
+//         let content = '<div style="padding: 10px 20px 0 20px; display: inline-block; font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.5; text-align: left; break-inside: avoid-column; break-inside: avoid;">'
+//         content += "<h2>" + title + "</h2>"
+//         content += text
+//         content += "</div>"
+//         return content
+//     }
 
-    function addStyles() {
-        return `
-        <style>
-            h1 { 
-                text-align: center;
-                color: #6D0000;
-            }
-            h2 {
-                color: #6D0000;
-            }
-        </style>
-        `
-    }
-}
+//     function addStyles() {
+//         return `
+//         <style>
+//             h1 { 
+//                 text-align: center;
+//                 color: #6D0000;
+//             }
+//             h2 {
+//                 color: #6D0000;
+//             }
+//         </style>
+//         `
+//     }
+// }
 
 
 function displayWelcomeText(text) {
@@ -313,44 +314,44 @@ function frsort(a, b) {
     return a.name.localeCompare(b.name);
 }
 
-async function generatePdfPuppeteer(file, options, callback) {
-    // we are using headless mode
-    let args = [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-    ];
-    if (options.args) {
-        args = options.args;
-        delete options.args;
-    }
+// async function generatePdfPuppeteer(file, options, callback) {
+//     // we are using headless mode
+//     let args = [
+//         '--no-sandbox',
+//         '--disable-setuid-sandbox',
+//     ];
+//     if (options.args) {
+//         args = options.args;
+//         delete options.args;
+//     }
 
-    const browser = await puppeteer.launch({
-        args: args
-    });
-    const page = await browser.newPage();
+//     const browser = await puppeteer.launch({
+//         args: args
+//     });
+//     const page = await browser.newPage();
 
-    if (file.content) {
-        let data = await inlineCss(file.content, { url: "/" });
-        // console.log("Compiling the template with handlebars")
-        // we have compile our code with handlebars
-        const template = hb.compile(data, { strict: true });
-        const result = template(data);
-        const html = result;
+//     if (file.content) {
+//         let data = await inlineCss(file.content, { url: "/" });
+//         // console.log("Compiling the template with handlebars")
+//         // we have compile our code with handlebars
+//         const template = hb.compile(data, { strict: true });
+//         const result = template(data);
+//         const html = result;
 
-        // We set the page content as the generated html by handlebars
-        await page.setContent(html, {
-            waitUntil: 'networkidle0', // wait for page to load completely
-        });
-    } else {
-        await page.goto(file.url, {
-            waitUntil: ['load', 'networkidle0'], // wait for page to load completely
-        });
-    }
+//         // We set the page content as the generated html by handlebars
+//         await page.setContent(html, {
+//             waitUntil: 'networkidle0', // wait for page to load completely
+//         });
+//     } else {
+//         await page.goto(file.url, {
+//             waitUntil: ['load', 'networkidle0'], // wait for page to load completely
+//         });
+//     }
 
-    return Promise.props(page.pdf(options))
-        .then(async function (data) {
-            await browser.close();
+//     return Promise.props(page.pdf(options))
+//         .then(async function (data) {
+//             await browser.close();
 
-            return Buffer.from(Object.values(data));
-        }).asCallback(callback);
-}
+//             return Buffer.from(Object.values(data));
+//         }).asCallback(callback);
+// }
