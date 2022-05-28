@@ -8,17 +8,12 @@ import figlet from 'figlet';
 import gradient from 'gradient-string';
 import fs from 'fs';
 import { readFile } from 'fs/promises';
-// import puppeteer from 'puppeteer';
-// import Promise from 'bluebird';
-// import hb from 'handlebars';
-// import { readFile } from 'fs/promises';
-// import inlineCss from 'inline-css';
 
 import Prince from 'prince'
 import util from 'util'
 
 // Wake up server
-// axios.get("https://pf2-database.herokuapp.com/wiki?id=feCnVrPPlKhl701x")
+axios.get("https://pf2-database.herokuapp.com/wiki?id=feCnVrPPlKhl701x")
 
 // Initialisation
 let spinner;
@@ -136,9 +131,6 @@ async function generatePDF(player) {
 
     fs.writeFileSync("./pathbuilder/player.html", html);
 
-    // const Prince = require("prince")
-    // const util = require("util")
-
     return new Promise(function (resolve, reject) {
         Prince()
             .inputs("./pathbuilder/player.html")
@@ -152,18 +144,6 @@ async function generatePDF(player) {
             })
 
     })
-
-
-
-
-    // let file = { content: html };
-    // return new Promise(function (resolve, reject) {
-    //     generatePdfPuppeteer(file, options).then(pdfBuffer => {
-    //         // console.log("PDF Buffer:-", pdfBuffer);
-    //         fs.writeFileSync('./pathbuilder/player.pdf', pdfBuffer)
-    //         resolve()
-    //     });
-    // })
 
 
     function addBlock(title, text) {
@@ -345,45 +325,3 @@ function blue(text) {
 function frsort(a, b) {
     return a.name.localeCompare(b.name);
 }
-
-// async function generatePdfPuppeteer(file, options, callback) {
-//     // we are using headless mode
-//     let args = [
-//         '--no-sandbox',
-//         '--disable-setuid-sandbox',
-//     ];
-//     if (options.args) {
-//         args = options.args;
-//         delete options.args;
-//     }
-
-//     const browser = await puppeteer.launch({
-//         args: args
-//     });
-//     const page = await browser.newPage();
-
-//     if (file.content) {
-//         let data = await inlineCss(file.content, { url: "/" });
-//         // console.log("Compiling the template with handlebars")
-//         // we have compile our code with handlebars
-//         const template = hb.compile(data, { strict: true });
-//         const result = template(data);
-//         const html = result;
-
-//         // We set the page content as the generated html by handlebars
-//         await page.setContent(html, {
-//             waitUntil: 'networkidle0', // wait for page to load completely
-//         });
-//     } else {
-//         await page.goto(file.url, {
-//             waitUntil: ['load', 'networkidle0'], // wait for page to load completely
-//         });
-//     }
-
-//     return Promise.props(page.pdf(options))
-//         .then(async function (data) {
-//             await browser.close();
-
-//             return Buffer.from(Object.values(data));
-//         }).asCallback(callback);
-// }
