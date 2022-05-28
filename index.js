@@ -14,6 +14,9 @@ import { readFile } from 'fs/promises';
 // import { readFile } from 'fs/promises';
 // import inlineCss from 'inline-css';
 
+import Prince from 'prince'
+import util from 'util'
+
 // Wake up server
 // axios.get("https://pf2-database.herokuapp.com/wiki?id=feCnVrPPlKhl701x")
 
@@ -82,10 +85,10 @@ let player = {
 // let data = fs.readFileSync('./out/player.json');
 // let player = JSON.parse(data);
 
-// spinner = createSpinner(grey('Génération du PDF...')).start()
-// await generatePDF(player)
-// spinner.success()
-// console.log(blue("Fichier ") + red("./pathbuilder/player.pdf ") + blue("généré avec succès."))
+spinner = createSpinner(grey('Génération du PDF...')).start()
+await generatePDF(player)
+spinner.success()
+console.log(blue("Fichier ") + red("./pathbuilder/player.pdf ") + blue("généré avec succès."))
 fs.writeFileSync("./pathbuilder/player.json", JSON.stringify(player));
 console.log(blue("Fichier ") + red("./pathbuilder/player.json ") + blue("généré avec succès"))
 
@@ -99,68 +102,97 @@ function translate(text) {
     return translation.nameFR
 }
 
-// async function generatePDF(player) {
-//     let options = {
-//         format: 'A4', margin: {
-//             top: "15mm",
-//             bottom: "15mm",
-//             left: "15mm",
-//             right: "15mm"
-//         }
-//     };
-//     let html = "<body>"
-//     html += "<h1>Dolgrin</h1>"
-//     html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
+async function generatePDF(player) {
+    let options = {
+        format: 'A4', margin: {
+            top: "15mm",
+            bottom: "15mm",
+            left: "15mm",
+            right: "15mm"
+        }
+    };
+    let html = "<body>"
+    html += "<h1>Dolgrin</h1>"
+    html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
 
-//     for (const feat of player.classFeats) {
-//         let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-//         html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
-//     }
+    html += "<h2 style=\"padding-left: 20px\">Dons de classe</h2>"
 
-//     for (const feat of player.ancestryFeats) {
-//         let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-//         html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
-//     }
+    for (const feat of player.classFeats) {
+        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
+        html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+    }
 
-//     html += "</div>"
-//     html += "</body>"
+    html += "<h2 style=\"padding-left: 20px\">Dons d'heritages</h2>"
 
-//     html += addStyles()
+    for (const feat of player.ancestryFeats) {
+        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
+        html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+    }
 
-//     // fs.writeFileSync("./test.html", html);
+    html += "</div>"
+    html += "</body>"
 
-//     let file = { content: html };
-//     return new Promise(function (resolve, reject) {
-//         generatePdfPuppeteer(file, options).then(pdfBuffer => {
-//             // console.log("PDF Buffer:-", pdfBuffer);
-//             fs.writeFileSync('./pathbuilder/player.pdf', pdfBuffer)
-//             resolve()
-//         });
-//     })
+    html += addStyles()
+
+    fs.writeFileSync("./pathbuilder/player.html", html);
+
+    // const Prince = require("prince")
+    // const util = require("util")
+
+    return new Promise(function (resolve, reject) {
+        Prince()
+            .inputs("./pathbuilder/player.html")
+            .output("./pathbuilder/player.pdf")
+            .execute()
+            .then(function () {
+                resolve()
+            }, function (error) {
+                console.log("ERROR: ", util.inspect(error))
+                reject()
+            })
+
+    })
 
 
-//     function addBlock(title, text) {
-//         let content = '<div style="padding: 10px 20px 0 20px; display: inline-block; font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.5; text-align: left; break-inside: avoid-column; break-inside: avoid;">'
-//         content += "<h2>" + title + "</h2>"
-//         content += text
-//         content += "</div>"
-//         return content
-//     }
 
-//     function addStyles() {
-//         return `
-//         <style>
-//             h1 { 
-//                 text-align: center;
-//                 color: #6D0000;
-//             }
-//             h2 {
-//                 color: #6D0000;
-//             }
-//         </style>
-//         `
-//     }
-// }
+
+    // let file = { content: html };
+    // return new Promise(function (resolve, reject) {
+    //     generatePdfPuppeteer(file, options).then(pdfBuffer => {
+    //         // console.log("PDF Buffer:-", pdfBuffer);
+    //         fs.writeFileSync('./pathbuilder/player.pdf', pdfBuffer)
+    //         resolve()
+    //     });
+    // })
+
+
+    function addBlock(title, text) {
+        let content = '<div style="padding: 10px 20px 0 20px; display: inline-block; font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.5; text-align: left; break-inside: avoid-column; break-inside: avoid;">'
+        content += "<h3>" + title + "</h3>"
+        content += text
+        content += "</div>"
+        return content
+    }
+
+    function addStyles() {
+        return `
+        <style>
+            h1 { 
+                text-align: center;
+                color: #6D0000;
+            }
+            h2 {
+                color: #000000;
+                margin-top: 0px;
+                margin-bottomn: 0px;
+            }
+            h3 {
+                color: #6D0000;
+            }
+        </style>
+        `
+    }
+}
 
 
 function displayWelcomeText(text) {
