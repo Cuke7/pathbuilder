@@ -58,7 +58,7 @@ await displayWelcomeText("Pathbuilder")
 let name = await askName();
 let level = await askLevel();
 let ancestry = await askAncestries();
-let ancestryCaracs = await askCaracs(["str", "dex", "con", "int", "wis", "cha"])
+let selectedAncestryCaracs = await askAncestryCaracs()
 let history = await askHistory();
 let classe = await askClasses();
 let feats = loadFeats();
@@ -92,9 +92,9 @@ let player = {
 spinner = createSpinner(grey('Génération du PDF...')).start()
 await generatePDF(player)
 spinner.success()
-console.log(blue("Fichier ") + red("./pathbuilder/player.pdf ") + blue("généré avec succès."))
+console.log(white("Fichier ") + green("./pathbuilder/player.pdf ") + white("généré avec succès."))
 fs.writeFileSync("./pathbuilder/player.json", JSON.stringify(player));
-console.log(blue("Fichier ") + red("./pathbuilder/player.json ") + blue("généré avec succès"))
+console.log(white("Fichier ") + green("./pathbuilder/player.json ") + white("généré avec succès"))
 
 
 //----------------------------------
@@ -102,7 +102,11 @@ console.log(blue("Fichier ") + red("./pathbuilder/player.json ") + blue("génér
 //----------------------------------
 function translate(text) {
     let translation = dictionary.find(item => item.nameEN.toLowerCase() === text.toLowerCase())
-    if (!translation) return text
+    if (!translation) {
+        if (text == "wis") return "sag"
+        if (text == "str") return "for"
+        return text
+    }
     return translation.nameFR
 }
 
@@ -193,14 +197,38 @@ function displayWelcomeText(text) {
     })
 }
 
-async function askCaracs(arr) {
+async function askAncestryCaracs() {
+    let boostList = [];
+    let autoSelected = [];
+    for (const boost of Object.values(ancestry.data.boosts)) {
+        if (boost.value.length == 1) {
+            autoSelected.push(boost.value[0])
+            boostList.push({ name: translate(boost.value[0]), value: boost.value, checked: true, disabled: " " })
+        }
+    }
+    boostList.push(new inquirer.Separator())
+    for (const boost of Object.values(ancestry.data.boosts)) {
+        for (const boost2 of boost.value) {
+            if (!autoSelected.includes(boost2)) {
+                boostList.push({ name: translate(boost2), value: boost2 })
+            }
+        }
+    }
+
     let answer = await inquirer.prompt({
         name: "caracs",
         type: "checkbox",
-        message: "Quels sont les caractéristiques de son héritage ?",
-        choices: arr,
+        message: "Quel est le bonus de charactéristique libre accordé par son ascendance ?",
+        choices: boostList,
+        validate: function (input) {
+            if (input.length != 1) {
+                return "Veuillez sélectionner un seul bonus de charactéristique"
+            } else {
+                return true
+            }
+        }
     })
-
+    answer.caracs.push(...autoSelected)
     return answer.caracs
 }
 
@@ -305,7 +333,7 @@ async function askFeats(feats, isClass) {
 
                 selectedFeats.push(await inquirer.prompt([
                     {
-                        name: "feat", type: "list", message: "Sélection du don de classe de niveau " + chalk.red(featLevel), choices: filteredFeats
+                        name: "feat", type: "list", message: "Sélection du don de classe de niveau " + green(featLevel), choices: filteredFeats
                     }
                 ]))
             }
@@ -318,7 +346,7 @@ async function askFeats(feats, isClass) {
 
                 selectedFeats.push(await inquirer.prompt([
                     {
-                        name: "feat", type: "list", message: "Sélection du don d'héritage de niveau " + chalk.red(featLevel), choices: filteredFeats
+                        name: "feat", type: "list", message: "Sélection du don d'héritage de niveau " + chalk.green(featLevel), choices: filteredFeats
                     }
                 ]))
             }
@@ -328,20 +356,34 @@ async function askFeats(feats, isClass) {
 }
 
 async function confirmFeats(feats) {
-    console.log(blue("Est ce que cela vous convient ?") + red(" y ") + blue("pour valider, " + red("n" + blue(" pour recommencer."))))
+    let confirmMessage = chalk.green("-----") + "\n" +
+        "Est ce que cela vous convient ?\n" + chalk.cyan.bold("o") + " pour valider" + "\n" +
+        chalk.cyan.bold("n") + " pour annuler" + "\n" + chalk.green("-----")
+    console.log(confirmMessage);
+    // console.log(blue("Est ce que cela vous convient ? ") + green("o") + blue("pour valider, " + red("n" + blue(" pour recommencer."))))
     let message = ""
     for (const feat of feats) {
         message += " - " + translate(feat.name) + " (" + feat.data.level.value + ")" + "\n"
     }
+    message += chalk.green("-----")
     let flag = await inquirer.prompt([{
         name: "confirm", message: message.slice(0, -1) + "\n", type: "confirm", prefix: ""
     }])
     return flag.confirm
 }
 
+function white(text) {
+    return chalk.bold(text)
+}
+
 function grey(text) {
     return chalk.grey(text)
 }
+
+function green(text) {
+    return chalk.green.bold(text)
+}
+
 
 function red(text) {
     return chalk.red(text)

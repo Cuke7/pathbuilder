@@ -85,7 +85,7 @@ class ListPrompt extends Base {
     let message = this.getQuestion();
 
     if (this.firstRender) {
-      message += chalk.dim('(Utiliser les flèches)');
+      // message += "\n" + chalk.green("-----") + "\n" + "Utilisez les flèches" + "\n" + chalk.green("-----");
     }
 
     // Render choices or answer depending on the state
@@ -186,9 +186,8 @@ function listRender(choices, pointer) {
     if (choice.disabled) {
       separatorOffset++;
       output += '  - ' + choice.name;
-      output += ` (${
-        typeof choice.disabled === 'string' ? choice.disabled : 'Disabled'
-      })`;
+      output += ` (${typeof choice.disabled === 'string' ? choice.disabled : 'Disabled'
+        })`;
       output += '\n';
       return;
     }

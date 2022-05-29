@@ -88,15 +88,15 @@ class CheckboxPrompt extends Base {
     let bottomContent = '';
 
     if (!this.dontShowHints) {
-      message +=
+      message += "\n" + chalk.green("-----") + "\n" +
         chalk.cyan.bold('<espace>') +
-        ' pour sélectionner, ' +
-        chalk.cyan.bold('<a>') +
-        ' pour tout sélectionner, ' +
-        chalk.cyan.bold('<i>') +
-        ' pour inverser la sélection et ' +
+        ' pour sélectionner\n' +
+        // chalk.cyan.bold('<a>') +
+        // ' pour tout sélectionner\n' +
+        // chalk.cyan.bold('<i>') +
+        // ' pour inverser la sélection\n' +
         chalk.cyan.bold('<entrer>') +
-        ' pour continuer)';
+        ' pour continuer' + "\n" + chalk.green("-----");
     }
 
     // Render choices or answer depending on the state
@@ -242,10 +242,9 @@ function renderChoices(choices, pointer) {
 
     if (choice.disabled) {
       separatorOffset++;
-      output += ' - ' + choice.name;
-      output += ` (${
-        typeof choice.disabled === 'string' ? choice.disabled : 'Disabled'
-      })`;
+      output += ' (*) ' + choice.name;
+      output += ` ${typeof choice.disabled === 'string' ? choice.disabled : 'Disabled'
+        }`;
     } else {
       const line = getCheckbox(choice.checked) + ' ' + choice.name;
       if (i - separatorOffset === pointer) {

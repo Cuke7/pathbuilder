@@ -18,7 +18,7 @@ class ConfirmPrompt extends Base {
       filter(input) {
         let value = rawDefault;
         if (input != null && input !== '') {
-          value = /^y(es)?/i.test(input);
+          value = /^o(ui)?/i.test(input);
         }
 
         return value;
@@ -29,7 +29,7 @@ class ConfirmPrompt extends Base {
       rawDefault = Boolean(this.opt.default);
     }
 
-    this.opt.default = rawDefault ? 'Y/n' : 'y/N';
+    this.opt.default = rawDefault ? 'O/n' : 'o/N';
   }
 
   /**
