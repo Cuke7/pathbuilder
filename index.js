@@ -9,7 +9,7 @@ import figlet from 'figlet';
 import gradient from 'gradient-string';
 import fs from 'fs';
 import { readFile } from 'fs/promises';
-
+import open from 'open';
 import Prince from 'prince'
 import util from 'util'
 
@@ -100,6 +100,7 @@ spinner.success()
 console.log(white("Fichier ") + green("./pathbuilder/player.pdf ") + white("généré avec succès."))
 fs.writeFileSync("./pathbuilder/player.json", JSON.stringify(player));
 console.log(white("Fichier ") + green("./pathbuilder/player.json ") + white("généré avec succès"))
+await open('./pathbuilder/player.pdf');
 
 
 //----------------------------------

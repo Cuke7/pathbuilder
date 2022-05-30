@@ -19,6 +19,7 @@
         "gradient-string": "^2.0.1",
         "inquirer": "^8.2.4",
         "nanospinner": "^1.1.0",
+        "open": "^8.4.0",
         "prince": "^1.9.6"
     }
 }
