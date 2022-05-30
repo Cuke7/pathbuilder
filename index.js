@@ -58,11 +58,11 @@ await displayWelcomeText("Pathbuilder")
 let name = await askName();
 let level = await askLevel();
 let ancestry = await askAncestries();
-let selectedAncestryBoots = await askAncestryBoosts()
+// let selectedAncestryBoots = await askAncestryBoosts()
 let history = await askHistory();
-let selectedHistoryBoots = await askHistoryBoosts()
+// let selectedHistoryBoots = await askHistoryBoosts()
 let classe = await askClasses();
-let freeBoosts = await askFreeBoosts();
+// let freeBoosts = await askFreeBoosts();
 let feats = loadFeats();
 let classFeats = []
 let userValidation = false;
@@ -86,9 +86,9 @@ let player = {
     history,
     classFeats,
     ancestryFeats,
-    selectedAncestryBoots,
-    selectedHistoryBoots,
-    freeBoosts
+    // selectedAncestryBoots,
+    // selectedHistoryBoots,
+    // freeBoosts
 }
 
 // let data = fs.readFileSync('./out/player.json');
@@ -116,22 +116,41 @@ function translate(text) {
 }
 
 async function generatePDF(player) {
+    let classItems = Object.values(classe.data.items).filter(item => item.level <= level)
     let html = "<body>"
     html += "<h1>Dolgrin</h1>"
     html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
 
-    html += "<h2 style=\"padding-left: 20px\">Dons de classe</h2>"
+    html += "<h2 style=\"padding-left: 20px\">Capacités de classe</h2>"
 
+    for (const item of classItems) {
+        // console.log("HEY", item.id)
+        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + item.id)
+        if (translation.data) {
+            html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+        } else {
+            console.log(red("Échec de la traduction de ") + item.name)
+        }
+    }
+
+    html += "<h2 style=\"padding-left: 20px\">Dons de classe</h2>"
     for (const feat of player.classFeats) {
         let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-        html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+        if (translation.data) {
+            html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+        } else {
+            console.log(red("Échec de la traduction de ") + item.name)
+        }
     }
 
     html += "<h2 style=\"padding-left: 20px\">Dons d'heritages</h2>"
-
     for (const feat of player.ancestryFeats) {
         let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-        html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+        if (translation.data) {
+            html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+        } else {
+            console.log(red("Échec de la traduction de ") + item.name)
+        }
     }
 
     html += "</div>"
@@ -190,7 +209,6 @@ async function generatePDF(player) {
         `
     }
 }
-
 
 function displayWelcomeText(text) {
     return new Promise(function (resolve, reject) {
