@@ -58,9 +58,11 @@ await displayWelcomeText("Pathbuilder")
 let name = await askName();
 let level = await askLevel();
 let ancestry = await askAncestries();
-let selectedAncestryCaracs = await askAncestryCaracs()
+let selectedAncestryBoots = await askAncestryBoosts()
 let history = await askHistory();
+let selectedHistoryBoots = await askHistoryBoosts()
 let classe = await askClasses();
+let freeBoosts = await askFreeBoosts();
 let feats = loadFeats();
 let classFeats = []
 let userValidation = false;
@@ -83,7 +85,10 @@ let player = {
     ancestry,
     history,
     classFeats,
-    ancestryFeats
+    ancestryFeats,
+    selectedAncestryBoots,
+    selectedHistoryBoots,
+    freeBoosts
 }
 
 // let data = fs.readFileSync('./out/player.json');
@@ -197,7 +202,83 @@ function displayWelcomeText(text) {
     })
 }
 
-async function askAncestryCaracs() {
+async function askFreeBoosts() {
+    let boostList = [{
+        name: "for", value: "str"
+    }, {
+        name: "dex", value: "dex"
+    }, {
+        name: "con", value: "con"
+    }, {
+        name: "int", value: "int"
+    }, {
+        name: "sag", value: "wis"
+    }, {
+        name: "cha", value: "cha"
+    }]
+
+    let answer = await inquirer.prompt({
+        name: "caracs",
+        type: "checkbox",
+        message: "Choissisez " + green("4") + " bonus libres",
+        choices: boostList,
+        validate: function (input) {
+            if (input.length == 4) {
+                return true
+            } else {
+                return "Il faut choisir quatres bonus"
+            }
+        }
+    })
+
+    return answer.caracs
+
+}
+
+
+async function askHistoryBoosts() {
+    let boostList = []
+    let boosts = Object.values(history.data.boosts).map(item => item.value)
+    let arr_required = boosts[0];
+    boosts[0] = boosts[0].map(item => ({ name: translate(item), value: item }))
+    boostList.push(...boosts[0])
+    boostList.push(new inquirer.Separator())
+    boosts[1] = boosts[1].map(item => ({ name: translate(item), value: item }))
+    boostList.push(...boosts[1])
+
+    let answer = await inquirer.prompt({
+        name: "caracs",
+        type: "checkbox",
+        message: "Quel sont les bonus de charactéristiques accordés par son historique ?",
+        choices: boostList,
+        validate: function (input) {
+            if (input.length == 2) {
+                let validate = false;
+                for (const boost of input) {
+                    if (arr_required.includes(boost)) {
+                        validate = true
+                    }
+                }
+                if (validate) {
+                    if (input[0] != input[1]) {
+                        return true
+                    } else {
+                        return "Les choix doivent être différents"
+                    }
+
+                } else {
+                    return "Le choix doit inclure au moins" + boostList[0].name + " ou " + boostList[1].name
+                }
+            } else {
+                return "Il faut choisir deux bonus"
+            }
+        }
+    })
+
+    return answer.caracs
+}
+
+async function askAncestryBoosts() {
     let boostList = [];
     let autoSelected = [];
     for (const boost of Object.values(ancestry.data.boosts)) {
