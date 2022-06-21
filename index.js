@@ -119,7 +119,7 @@ function translate(text) {
 async function generatePDF(player) {
     let classItems = Object.values(classe.data.items).filter(item => item.level <= level)
     let html = "<body>"
-    html += "<h1>Dolgrin</h1>"
+    html += "<h1>" + player.name + "</h1>"
     html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
 
     html += "<h2 style=\"padding-left: 20px\">Capacités de classe</h2>"
