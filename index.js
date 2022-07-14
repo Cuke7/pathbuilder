@@ -58,11 +58,7 @@ await displayWelcomeText("Pathbuilder")
 let name = await askName();
 let level = await askLevel();
 let ancestry = await askAncestries();
-// let selectedAncestryBoots = await askAncestryBoosts()
-// let history = await askHistory();
-// let selectedHistoryBoots = await askHistoryBoosts()
 let classe = await askClasses();
-// let freeBoosts = await askFreeBoosts();
 let feats = loadFeats();
 let classFeats = []
 let userValidation = false;
@@ -83,12 +79,8 @@ let player = {
     level,
     classe,
     ancestry,
-    // history,
     classFeats,
     ancestryFeats,
-    // selectedAncestryBoots,
-    // selectedHistoryBoots,
-    // freeBoosts,
 }
 
 // let data = fs.readFileSync('./out/player.json');
@@ -122,45 +114,16 @@ async function generatePDF(player) {
     html += "<h1>" + player.name + "</h1>"
     html += '<div style="column-count: 2;margin-left: auto; margin-right: auto;">'
 
-    html += "<h2 style=\"padding-left: 20px\"><span>Capacités de classe</span></h2>"
+    await addItems(classItems, "Capacités de classe")
 
-    for (const item of classItems) {
-        // console.log("HEY", item.id)
-        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + item.id)
-        if (translation.data) {
-            html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
-        } else {
-            console.log(red("Échec de la traduction de ") + item.name)
-        }
-    }
+    await addItems(player.classFeats, "Dons de classe")
 
-    html += "<h2 style=\"padding-left: 20px\"><span>Dons de classe</span></h2>"
-    for (const feat of player.classFeats) {
-        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-        if (translation.data) {
-            html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
-        } else {
-            console.log(red("Échec de la traduction de ") + item.name)
-        }
-    }
-
-    html += "<h2 style=\"padding-left: 20px\"><span>Dons d'heritages</span></h2>"
-    for (const feat of player.ancestryFeats) {
-        let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + feat._id)
-        if (translation.data) {
-            html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
-        } else {
-            console.log(red("Échec de la traduction de ") + item.name)
-        }
-    }
+    await addItems(player.ancestryFeats, "Dons d'heritages")
 
     html += "</div>"
     html += "</body>"
-
     html += addStyles()
-
     fs.writeFileSync("./pathbuilder/player.html", html);
-
     return new Promise(function (resolve, reject) {
         Prince()
             .inputs("./pathbuilder/player.html")
@@ -172,43 +135,70 @@ async function generatePDF(player) {
                 console.log("ERROR: ", util.inspect(error))
                 reject()
             })
-
     })
 
-
-    function addBlock(title, text) {
-        let content = '<div style="padding: 10px 20px 0 20px; display: inline-block; font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.5; text-align: left; break-inside: avoid-column; break-inside: avoid;">'
-        content += "<h3>" + title + "</h3>"
-        content += text
-        content += "</div>"
-        return content
+    async function addItems(items, title) {
+        return new Promise(async function (resolve) {
+            html += `<h2 style="padding-left: 20px;"><span>${title}</span></h2>`
+            for (const item of items) {
+                let id = item._id ? item._id : item.id
+                let translation = await axios.get("https://pf2-database.herokuapp.com/wiki?id=" + id)
+                if (translation.data) {
+                    html += addBlock(translation.data.nameFR, translation.data.descriptionFR)
+                    let ref = "*"
+                    for (const reference of translation.data.references) {
+                        html += addReference(ref + reference.description.nameFR, reference.description.descriptionFR)
+                        ref += "*"
+                    }
+                } else {
+                    console.log(red("Échec de la traduction de ") + item.name)
+                }
+            }
+            resolve()
+        })
     }
+}
 
-    function addStyles() {
-        return `
-        <style>
-            h1 { 
-                text-align: center;
-                color: #6D0000;
-            }
-            h2 {
-                color: #FFFFFF;
-                margin-top: 0px;
-                margin-bottom: 0px;
-            }
-            h3 {
-                color: #6D0000;
-            }
-            @page {
-                background-image: url("../data/background.jpg");
-              }
-            h2 span { 
-                background-color: #6D0000;
-                padding: 5px 10px 5px 10px;
-            }
-        </style>
-        `
-    }
+function addReference(title, text) {
+    let content = '<div style="padding: 0px 20px 0 20px; font-family: Georgia, "Times New Roman", serif; font-size: 1rem; line-height: 1.5; text-align: left; break-inside: avoid-column; break-inside: avoid;">'
+    content += "<h4>" + title + "</h4>"
+    content += text
+    content += "</div>"
+    return content
+}
+
+function addBlock(title, text) {
+    let content = '<div style="padding: 10px 20px 0 20px; font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; line-height: 1.5; text-align: left; break-inside: avoid-column; break-inside: avoid;">'
+    content += "<h3>" + title + "</h3>"
+    content += text
+    content += "</div>"
+    return content
+}
+
+function addStyles() {
+    return `
+    <style>
+        h1 { 
+            text-align: center;
+            color: #6D0000;
+        }
+        h2 {
+            color: #FFFFFF;
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
+        h3 {
+            color: #6D0000;
+        }
+        @page {
+            background-image: url("../data/background.jpg");
+          }
+        h2 span { 
+            background-color: #6D0000;
+            padding: 5px 10px 5px 10px;
+        }
+    </style>
+    `
 }
 
 function displayWelcomeText(text) {
@@ -221,116 +211,6 @@ function displayWelcomeText(text) {
     })
 }
 
-// async function askFreeBoosts() {
-//     let boostList = [{
-//         name: "for", value: "str"
-//     }, {
-//         name: "dex", value: "dex"
-//     }, {
-//         name: "con", value: "con"
-//     }, {
-//         name: "int", value: "int"
-//     }, {
-//         name: "sag", value: "wis"
-//     }, {
-//         name: "cha", value: "cha"
-//     }]
-
-//     let answer = await inquirer.prompt({
-//         name: "caracs",
-//         type: "checkbox",
-//         message: "Choissisez " + green("4") + " bonus libres",
-//         choices: boostList,
-//         validate: function (input) {
-//             if (input.length == 4) {
-//                 return true
-//             } else {
-//                 return "Il faut choisir quatres bonus."
-//             }
-//         }
-//     })
-
-//     return answer.caracs
-
-// }
-
-
-// async function askHistoryBoosts() {
-//     let boostList = []
-//     let boosts = Object.values(history.data.boosts).map(item => item.value)
-//     let arr_required = boosts[0];
-//     boosts[0] = boosts[0].map(item => ({ name: translate(item), value: item }))
-//     boostList.push(...boosts[0])
-//     boostList.push(new inquirer.Separator())
-//     boosts[1] = boosts[1].map(item => ({ name: translate(item), value: item }))
-//     boostList.push(...boosts[1])
-
-//     let answer = await inquirer.prompt({
-//         name: "caracs",
-//         type: "checkbox",
-//         message: "Quel sont les bonus de charactéristiques accordés par son historique ?",
-//         choices: boostList,
-//         validate: function (input) {
-//             if (input.length == 2) {
-//                 let validate = false;
-//                 for (const boost of input) {
-//                     if (arr_required.includes(boost)) {
-//                         validate = true
-//                     }
-//                 }
-//                 if (validate) {
-//                     if (input[0] != input[1]) {
-//                         return true
-//                     } else {
-//                         return "Les choix doivent être différents."
-//                     }
-
-//                 } else {
-//                     return "Le choix doit inclure au moins " + green(boostList[0].name) + " ou " + green(boostList[1].name) + "."
-//                 }
-//             } else {
-//                 return "Il faut choisir deux bonus."
-//             }
-//         }
-//     })
-
-//     return answer.caracs
-// }
-
-// async function askAncestryBoosts() {
-//     let boostList = [];
-//     let autoSelected = [];
-//     for (const boost of Object.values(ancestry.data.boosts)) {
-//         if (boost.value.length == 1) {
-//             autoSelected.push(boost.value[0])
-//             boostList.push({ name: translate(boost.value[0]), value: boost.value, checked: true, disabled: " " })
-//         }
-//     }
-//     boostList.push(new inquirer.Separator())
-//     for (const boost of Object.values(ancestry.data.boosts)) {
-//         for (const boost2 of boost.value) {
-//             if (!autoSelected.includes(boost2)) {
-//                 boostList.push({ name: translate(boost2), value: boost2 })
-//             }
-//         }
-//     }
-
-//     let answer = await inquirer.prompt({
-//         name: "caracs",
-//         type: "checkbox",
-//         message: "Quel est le bonus de charactéristique libre accordé par son ascendance ?",
-//         choices: boostList,
-//         validate: function (input) {
-//             if (input.length != 1) {
-//                 return "Veuillez sélectionner un seul bonus de charactéristique"
-//             } else {
-//                 return true
-//             }
-//         }
-//     })
-//     answer.caracs.push(...autoSelected)
-//     return answer.caracs
-// }
 
 async function askName() {
     let answer = await inquirer.prompt({
@@ -398,24 +278,6 @@ async function askAncestries() {
     return answer.ancestry
 }
 
-// async function askHistory() {
-//     let historyChoice = []
-//     for (const key of Object.keys(historyList)) {
-//         let history = historyList[key]
-//         let name = translate(history.name);
-//         history.key = key;
-//         let value = history
-//         historyChoice.push({ name, value })
-//     }
-//     let answer = await inquirer.prompt({
-//         name: "classe",
-//         type: "list",
-//         message: "Pouvez vous m'en dire plus sur son historique ?",
-//         choices: historyChoice.sort(frsort),
-//     })
-//     return answer.classe
-// }
-
 function loadFeats() {
     let featsArray = Object.values(featsList)
     let classFeats = featsArray.filter(feat => (feat.data.featType.value == "class" && feat.data.traits.value.includes(classe.key)))
@@ -459,7 +321,6 @@ async function confirmFeats(feats) {
         "Est ce que cela vous convient ?\n" + chalk.cyan.bold("o") + " pour valider" + "\n" +
         chalk.cyan.bold("n") + " pour annuler" + "\n" + chalk.green("-----")
     console.log(confirmMessage);
-    // console.log(blue("Est ce que cela vous convient ? ") + green("o") + blue("pour valider, " + red("n" + blue(" pour recommencer."))))
     let message = ""
     for (const feat of feats) {
         message += " - " + translate(feat.name) + " (" + feat.data.level.value + ")" + "\n"
